@@ -138,7 +138,16 @@ def handle_webhook(data):
         handle_count(chat_id)
 
 # Start webhook listener
-webhook_url = 'https://516c-89-151-34-3.eu.ngrok.io'
+import subprocess
+import re
+
+# Run the ngrok command and capture the output
+result = subprocess.run(["ngrok", "http", "50077", "--host-header=50077"], capture_output=True)
+
+# Extract the ngrok URL from the output using regular expressions
+match = re.search(r"https://.*ngrok.io", result.stdout.decode())
+ngrok_url = match.group(0)
+webhook_url = ngrok_url
 webhook_listen_url = '{}:443/'.format(webhook_url)
 
 def start_webhook():
