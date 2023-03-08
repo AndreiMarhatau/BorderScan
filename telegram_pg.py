@@ -142,11 +142,18 @@ import subprocess
 import re
 
 # Run the ngrok command and capture the output
-result = subprocess.run(["ngrok", "http", "50077", "--host-header=50077"], capture_output=True)
+output = subprocess.check_output(['ngrok', 'http', '50077', '--host-header=50077'])
 
-# Extract the ngrok URL from the output using regular expressions
-match = re.search(r"https://.*ngrok.io", result.stdout.decode())
-ngrok_url = match.group(0)
+# Convert the output to a string and split it by newlines
+output_str = output.decode('utf-8')
+output_lines = output_str.split('\n')
+
+# Find the line that contains the ngrok URL
+url_line = next(line for line in output_lines if 'Forwarding' in line)
+
+# Extract the ngrok URL from the line
+ngrok_url = url_line.split(' ')[1]
+
 webhook_url = ngrok_url
 webhook_listen_url = '{}:443/'.format(webhook_url)
 
