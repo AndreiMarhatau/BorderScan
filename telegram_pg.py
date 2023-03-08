@@ -139,28 +139,27 @@ def handle_webhook(data):
 
 # Start webhook listener
 import subprocess
+import re
 import threading
 
-ngrok_url = None
-def start_ngrok():
-    global ngrok_url
-    # Execute the command and capture the output
-    output = subprocess.check_output(['ngrok', 'http', '50077', '--host-header=50077'])
+NGROK_URL = None
 
-    # Convert the output to a string and split it by newlines
-    output_str = output.decode('utf-8')
-    output_lines = output_str.split('\n')
-
-    # Find the line that contains the ngrok URL
-    url_line = next(line for line in output_lines if 'Forwarding' in line)
-
-    # Extract the ngrok URL from the line
-    ngrok_url = url_line.split(' ')[1]
-    
-ngrok_thread = threading.Thread(target=start_ngrok)
+def get_ngrok_url():
+    global NGROK_URL
+    while True:
+        ngrok_output = subprocess.check_output(["ngrok", "http", "50077", "--host-header=50077"]).decode()
+        match = re.search(r"https://\w+.ngrok.io", ngrok_output)
+        if match:
+            NGROK_URL = match.group()
+            print(f"NGROK_URL set to {NGROK_URL}")
+        else:
+            print("Could not retrieve ngrok URL")
+ngrok_thread = threading.Thread(target=get_ngrok_url)
 ngrok_thread.start()
-
-webhook_url = ngrok_url
+# Wait for ngrok URL to be set
+while not NGROK_URL:
+    pass
+webhook_url = NGROK_URL
 webhook_listen_url = '{}:443/'.format(webhook_url)
 
 def start_webhook():
