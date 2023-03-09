@@ -142,24 +142,30 @@ import subprocess
 import re
 import threading
 
-NGROK_URL = None
+import subprocess
+import re
 
-def get_ngrok_url():
-    global NGROK_URL
-    while True:
-        ngrok_output = subprocess.check_output(["ngrok", "http", "50077", "--host-header=50077"]).decode()
-        match = re.search(r"https://\w+.ngrok.io", ngrok_output)
+ngrok_url = None
+def run_ngrok():
+    global ngrok_url
+    ngrok_cmd = "C:\Users\ANDR1O\Desktop\ngrok\ngrok http 50077 --host-header=50077"
+    ngrok_proc = subprocess.Popen(ngrok_cmd.split(), stdout=subprocess.PIPE)
+    for line in ngrok_proc.stdout:
+        line = line.decode().strip()
+        print(line)
+        match = re.search(r"https://.*ngrok\.io", line)
         if match:
-            NGROK_URL = match.group()
-            print(f"NGROK_URL set to {NGROK_URL}")
-        else:
-            print("Could not retrieve ngrok URL")
-ngrok_thread = threading.Thread(target=get_ngrok_url)
+            ngrok_url = match.group(0)
+            print("Ngrok URL:", ngrok_url)
+            break
+
+import threading
+
+ngrok_thread = threading.Thread(target=run_ngrok)
 ngrok_thread.start()
-# Wait for ngrok URL to be set
-while not NGROK_URL:
-    pass
-webhook_url = NGROK_URL
+ngrok_thread.join()
+
+webhook_url = ngrok_url
 webhook_listen_url = '{}:443/'.format(webhook_url)
 
 def start_webhook():
